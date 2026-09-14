@@ -1,0 +1,9 @@
+# MATLAB temporary files
+*.asv
+*.autosave
+
+# macOS files
+.DS_Store
+
+# MATLAB cache / generated files
+*.mex*
