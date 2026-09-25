@@ -16,7 +16,9 @@ nodesInJunction = net(9:end);
 cliques = [1,1,1,2,2,2,3,3,3,4,4,4];
 cycle = [0,15,30,45,60];
 traffic = trafficControl.TrafficLight(nodesInJunction,'Cliques',cliques,'Cycle',cycle);
-
+%%
+% MATLAB R2026a compatibility fix
+initializeOTLScenario(s);
 %%
 % Record video
 recordVid = false;
@@ -33,21 +35,37 @@ xLim = sPlot.XLim + [-5,5];
 yLim = sPlot.YLim + [-5,5];
 set(sPlot,'XLim',xLim)
 set(sPlot,'YLim',yLim)
+
+%Waiting time calculation
+totalCarWaitingTime = 0;
 %%
+%Run simulation
  while advance(s)
-     set(sPlot,'XLim',xLim)
-     set(sPlot,'YLim',yLim)
-     traffic.plotOpenPaths()
-     %drawnow
-     %Record video
-     if recordVid
-         frame = getframe(gcf);
-         writeVideo(vid,frame);
-     end
+    % Calculation Car waiting time
+    for k=1:numel(cars)
+
+        speed = norm(cars(k).Velocity);
+
+        if speed<0.5
+            totalCarWaitingTime = totalCarWaitingTime + s.SampleTime;
+        end
+    end
+
+    set(sPlot,'XLim',xLim)
+    set(sPlot,'YLim',yLim)
+    traffic.plotOpenPaths()
+    %drawnow
+    %Record video
+    if recordVid
+        frame = getframe(gcf);
+        writeVideo(vid,frame);
+    end
      
  end
  
 if recordVid
  close(vid)
 end
+
+fprintf("Total car waitiing time = %.2f second\n", totalCarWaitingTime);
 

@@ -63,25 +63,32 @@ classdef TrafficController  < driving.scenario.MotionStrategy...
             hold(ax,'on');
             if isempty(obj.PlotHandles)
                 for node=obj.Nodes
-                    obj.PlotHandles(end+1) = plot3(ax,node.Mapping(:,2),node.Mapping(:,3),node.Mapping(:,4)+10);
+                    obj.PlotHandles(end+1) = ...
+                        plot3(ax, ...
+                        node.Mapping(:,2), ...
+                        node.Mapping(:,3), ...
+                        node.Mapping(:,4)+10);
                 end
             end
             for idx = 1:length(obj.Nodes)
                 p = obj.PlotHandles(idx);
                 node = obj.Nodes(idx);
+                
                 p.XData = node.Mapping(:,2);
                 p.YData = node.Mapping(:,3);
                 p.ZData = node.Mapping(:,4)+0;
                 
                 p.LineWidth = 2;
+                
                 if obj.IsOpen(idx)==true
                     p.Color = green;
                 else
                     p.Color = red;
                 end
-            end
+            end 
         end
     end
 end
+
 
 
