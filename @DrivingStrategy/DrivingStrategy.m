@@ -406,29 +406,107 @@ classdef DrivingStrategy < driving.scenario.MotionStrategy...
         end
         
         function [leader,leaderSpacing] = getLeader(obj,tNow)
-            % Get other actors in the node and their stations
+
+            % 取得目前道路上的所有車輛
             actors = getVehiclesInSegment(obj);
-            drivers = [actors.MotionStrategy];
-            selfIdx = find(drivers == obj);
-            stations = [drivers.Station];
+        
+            % 沒有其他車輛
+            if isempty(actors)
+                leader = driving.scenario.Vehicle.empty;
+                leaderSpacing = nan;
+                return;
+            end
+    
+            % ---------------------------------------------------------
+            % 不使用：
+            %
+            % drivers = [actors.MotionStrategy];
+            %
+            % 因為現在可能同時存在：
+            % DrivingStrategy
+            % MotorcycleStrategy
+            %
+            % 改成逐台取得 Strategy
+            % ---------------------------------------------------------
+        
+            numActors = numel(actors);
+    
+            stations = zeros(1,numActors);
+        
+            % 先指定一個不存在的索引
+            selfIdx = 0;
+        
+            for k = 1:numActors
+        
+                driver = actors(k).MotionStrategy;
+        
+                % 記錄每台車在道路上的位置
+                stations(k) = driver.Station;
+        
+                % 找到自己
+                if driver == obj
+                    selfIdx = k;
+                end
+        
+            end
+    
+            % 如果找不到自己
+            if selfIdx == 0
+                leader = driving.scenario.Vehicle.empty;
+                leaderSpacing = nan;
+                return;
+            end
+        
+            % ---------------------------------------------------------
+            % 計算其他車輛與自己的距離
+            % ---------------------------------------------------------
+        
             deltaStations = stations - stations(selfIdx);
-            deltaStations(deltaStations<0.1)=inf;
-            [leaderSpacing,idx]=min(deltaStations);
+        
+            % 自己以及後方車輛不算 Leader
+            deltaStations(deltaStations < 0.1) = inf;
+        
+            % 找最近的前車
+            [leaderSpacing,idx] = min(deltaStations);
+        
+            % ---------------------------------------------------------
+            % 沒有前車
+            % ---------------------------------------------------------
+        
             if isinf(leaderSpacing)
+        
                 leaderSpacing = nan;
                 leader = driving.scenario.Vehicle.empty;
+        
+                % 如果前方還有下一個 Node
                 if ~isempty(obj.NextNode)
-                    [sLeader,leader] = obj.NextNode(1).getTrailingVehicleStation(tNow);
+        
+                    [sLeader,leader] = ...
+                        obj.NextNode(1).getTrailingVehicleStation(tNow);
+        
                     if ~isempty(leader)
-                        leaderSpacing = sLeader-leader.Length +(obj.getSegmentLength()-stations(selfIdx));
+        
+                        leaderSpacing = ...
+                            sLeader ...
+                            - leader.Length ...
+                            + (obj.getSegmentLength() - stations(selfIdx));
+        
                     end
                 end
-            
+        
+            % ---------------------------------------------------------
+            % 有前車
+            % ---------------------------------------------------------
+        
             else
+        
                 leader = actors(idx);
-                leaderSpacing = leaderSpacing-leader.Length;
+        
+                leaderSpacing = ...
+                    leaderSpacing - leader.Length;
+        
             end
-            
+    
         end
         
         function actors = getVehiclesInSegment(obj)

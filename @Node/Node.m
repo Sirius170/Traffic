@@ -144,26 +144,72 @@ classdef Node < handle
             if nargin<2 %If no time is given assume current sim time
                 time = obj.Scenario.SimulationTime;
             end
-            drivers = [obj.Vehicles.MotionStrategy];
-            if isempty(drivers)
+
+            %drivers = [obj.Vehicles.MotionStrategy];
+            %如果目前道路沒有車
+            if isempty(obj.Vehicles)
                 s = obj.getRoadSegmentLength();
                 veh = driving.scenario.Vehicle.empty;
                 return
             end
-            [s,idx] = min(getStationDistance(drivers,time));
-            veh = drivers(idx).EgoActor;
+            % ---------------------------------------------------------
+            % 不再使用：
+            %
+            % drivers = [obj.Vehicles.MotionStrategy];
+            %
+            % 因為現在可能同時存在 DrivingStrategy
+            % 和 MotorcycleStrategy。
+            % ---------------------------------------------------------
+            numVehicles = numel(obj.Vehicles);
+
+            minStation = inf;
+            minVehicle = driving.scenario.Vehicle.empty;
+
+            for k = 1:numVehicles
+                %取的第k台車的Strategy
+                driver = obj.Vehicles(k).MotionStrategy
+                
+                %取的這台車目前的位置
+                station = getStationDistance(driver, time);
+
+                %找距離道路起點最近的車
+                if station < minStation
+                    minStation = station;
+                    minVehicle = obj.Vehicles(k);
+                end
+            end
+
+            s= minStation;
+            veh = minVehicle;
         end
         
         function s = getLeadingVehicleStation(obj,time)
             if nargin<2 %If no time is given assusme current sim time
                 time = obj.Scenario.SimulationTime;
             end
-            drivers = [obj.Vehicles.MotionStrategy];
-            if isempty(drivers)
+
+            if isempty(obj.Vehicles)
                 s = 0;
                 return
             end
-            s = max(getStationDistance(drivers,time));
+            
+            numVehicles = numel(obk.vehicles);
+            maxStation = -inf;
+
+            for k=1:numVehicles
+                %取得第k台車的 Strategy
+                driver = obj.Vehicles(k).MotionStrategy;
+
+                %取得這台車目前的位置
+                station = getStationDistance(driver, time);
+
+                %找距離道路終點最近的車
+                if station >maxStation
+                    maxStation = station;
+                end
+            end
+            
+            s = maxStation
         end
         
         function l = plotPath(obj,ax)

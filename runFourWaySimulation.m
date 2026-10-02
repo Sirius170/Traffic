@@ -26,11 +26,15 @@ s.SampleTime = 0.05;
 
 net = createFourWayJunctionNetwork(s);
 
-[cars, entryRoad] = createVehiclesForFourWayJunction( ...
-    s, net, inflow, turnWeights);
+MotorcycleShare = 0.5;
+[cars, motorcycles, carEntryRoad, motorcycleEntryRoad] = createVehiclesForFourWayJunction( ...
+    s, net, inflow, turnWeights, MotorcycleShare);
 
 % ---------- 等待時間 ----------
-waitingTime = zeros(numel(cars),1);
+allVehicles = [cars(:); motorcycles(:)];
+allEntryRoad = [carEntryRoad(:); motorcycleEntryRoad(:)];
+
+waitingTime = zeros(numel(allVehicles),1);
 waitingByRoad = zeros(4,1);
 
 % ---------- 建立號誌 ----------
@@ -48,19 +52,17 @@ initializeOTLScenario(s);
 
 while advance(s)
 
-    for k = 1:numel(cars)
+    for k = 1:numel(allVehicles)
 
-        speed = norm(cars(k).Velocity);
+        speed = norm(allVehicles(k).Velocity);
 
         if speed < 0.1
 
-            waitingTime(k) = ...
-                waitingTime(k) + s.SampleTime;
+            waitingTime(k) = waitingTime(k) + s.SampleTime;
 
-            road = entryRoad(k);
+            road = allEntryRoad(k);
 
-            waitingByRoad(road) = ...
-                waitingByRoad(road) + s.SampleTime;
+            waitingByRoad(road) = waitingByRoad(road) + s.SampleTime;
 
         end
 

@@ -84,6 +84,22 @@ net(15).ConnectsTo = net(8);
 
 net(4).SharesRoadWith = net(8);
 
+%% =========================================================
+% 兩段式左轉的第二階段連接
+% 機車第一段直行到對向後，
+% 等待對向方向號誌，再進行第二段左轉
+% =========================================================
 
+% South -> North -> West
+net(10).ConnectsTo = net(17);
+
+% West -> East -> North
+net(13).ConnectsTo = net(20);
+
+% North -> South -> East
+net(16).ConnectsTo = net(11);
+
+% East -> West -> North
+net(19).ConnectsTo = net(12);
 end
 
