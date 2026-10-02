@@ -193,7 +193,7 @@ classdef Node < handle
                 return
             end
             
-            numVehicles = numel(obk.vehicles);
+            numVehicles = numel(obj.vehicles);
             maxStation = -inf;
 
             for k=1:numVehicles
@@ -209,7 +209,7 @@ classdef Node < handle
                 end
             end
             
-            s = maxStation
+            s = maxStation;
         end
         
         function l = plotPath(obj,ax)

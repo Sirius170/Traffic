@@ -2,10 +2,13 @@ classdef MotorcycleStrategy < DrivingStrategy
     properties
         TurnStage = 0 %一般行駛
     end
-    
-    %%汽車原本怎麼開，機車先全部沿用。
-    %%只有遇到「左轉」時，機車才需要多一層特殊處理。    
-    
+
+    %=================================================
+    %汽車原本怎麼開，機車先全部沿用。
+    %只有遇到「左轉」時，機車才需要多一層特殊處理。    
+    %=================================================
+
+
     methods
         function obj = MotorcycleStrategy(actor, varargin)
             obj@DrivingStrategy(actor, varargin{:});

@@ -45,9 +45,9 @@ net(end+1) = Node(scenario,scenario.RoadSegments(10),-1);
 
 %% Connect the Nodes
 % South Road
-net(1).ConnectsTo = net(9);
-net(1).ConnectsTo = net(10);
-net(1).ConnectsTo = net(11);
+net(1).ConnectsTo = net(9);  % South to West
+net(1).ConnectsTo = net(10); % South to North
+net(1).ConnectsTo = net(11); % South to East
 net(14).ConnectsTo = net(5);
 net(16).ConnectsTo = net(5);
 net(18).ConnectsTo = net(5);

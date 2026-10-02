@@ -40,9 +40,16 @@ for i=1:numEntryRoads
         isMotorcycle = rand< motorcycleShare;
 
 
-        %%===決定路徑===
-        %Where you come from → where you pass through → where you finally go.
-        path = [net(i), net(i).ConnectsTo(j), net(i).ConnectsTo(j).ConnectsTo(1)];
+        %%-----------決定路徑------------------
+        %汽車/機車:使用原本路徑
+        %左轉機車: 使用兩段式左轉
+        if isMotorcycle && j==1
+            path = getMotorcycleLeftPath(i, net);
+        else
+            %Where you come from → where you pass through → where you finally go.
+            path = [net(i), net(i).ConnectsTo(j), net(i).ConnectsTo(j).ConnectsTo(1)];
+        end
+
         %計算車輛初始位置與方向
         pos = path(1).getRoadCenterFromStation(0);
         [station,direction,offset]=path(1).getStationDistance(pos(1:2));
