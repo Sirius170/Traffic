@@ -22,7 +22,7 @@ classdef MotorcycleStrategy < DrivingStrategy
             obj@DrivingStrategy(actor, varargin{:});
 
             % 初始狀態
-            obj.TurnStage = 0;
+            obj.TurnStage = false;
             obj.IsTwoStageLeft = false;
         end
 
@@ -35,7 +35,7 @@ classdef MotorcycleStrategy < DrivingStrategy
             car = obj.EgoActor;
 
 
-            %% 如果「還沒進入道路」，或者「已經離開道路」。
+            %% 還沒進入道路，或者已經離開道路
             if tNow >= car.ExitTime || tNow < car.EntryTime
                 % 不顯示這輛車
                 car.IsVisible = false;
@@ -45,17 +45,19 @@ classdef MotorcycleStrategy < DrivingStrategy
                 return
             end
 
+            
+
             %% Check if the vehicle has entered
             if (tNow - car.EntryTime > 0 && tNow - car.EntryTime < dt)
-                [s, leader] = getTrailingVehicleStation(obj.Station(1));
+                [s, leader] = getTrailingVehicleStation(obj.NextNode(1));
 
                 if isempty(leader)
                     injectVehicle(obj, tNow, obj.Speed);
                 else
-                    delVel = leader.MotionStratgy.Speed - obj.Speed;
+                    delVel = leader.MotionStrategy.Speed - obj.Speed;
                     spacing = s - leader.Length;
 
-                    [~,v_b,v_a] = drivingBehavior.gtppsDriverModel(...
+                    [~,v_b,v_a] = drivingBehavior.gippsDriverModel(...
                         spacing, obj.Speed, delVel);
 
                     if v_b > 1
@@ -69,8 +71,9 @@ classdef MotorcycleStrategy < DrivingStrategy
                     end
                 end
             end
+
             
-            %% 把車子上一個時間點的狀態全部找回來
+            %% 取得上一個時間點的狀態
             obj.Position = getPosition(obj,tNow);
             obj.Speed = getSpeed(obj,tNow);
 
@@ -84,6 +87,48 @@ classdef MotorcycleStrategy < DrivingStrategy
             obj.UDStates = getUDStates(obj,tNow);
 
 
+            %% 兩段式左轉 Stage2: 待轉區等待
+            if obj.IsTwoStageLeft && obj.TurnStage == 2
+                % 檢查下一個 Node 是否開啟
+                if getNextNodeState(obj)
+                    % 第二階段號誌開放
+                    obj.TurnStage = 3;
+
+                    % 進入第二階段左轉的 Node
+                    goToNextNode(obj, tNext);
+
+                    if isempty(obj.Node)
+                        running = false;
+                        return
+                    end
+
+                    % 重新取得車道方向與偏移
+                    [station, direction, offset] = getLaneInformation(obj);
+
+                else
+                    % 號誌尚未開放，維持在待轉區等待
+                    obj.Speed = 0;
+                    obj.Acceleration = 0;
+
+                    station = getSegmentLength(obj);
+
+                    obj.Position = ...
+                        getRoadCenterFromStation(obj.Node, station);
+                    [station, direction, offset] = getLaneInformation(obj);
+
+                    obj.Station = station;
+
+                    if obj.StaticLaneKeeping
+                        obj.orientEgoActor(direction, offset);
+                    end
+
+                    addData(obj, tNext);
+                    running = true;
+                    return
+                end
+            end
+
+
             %% Environment dependent variables
             [obj.Leader, obj.LeaderSpacing] = getLeader(obj,tNow);
 
@@ -92,16 +137,13 @@ classdef MotorcycleStrategy < DrivingStrategy
                 obj.IsLeader = true;
             end
 
-            %% Determine driving mode
-            obj.Node = determineDrivingMode(obj,tNow);
-
             %% Get driving mode
             obj.Mode = determineDrivingMode(obj,tNow);
 
             %% Get driving inputs
             inputs = determineDrivingInputs(obj,tNow);
 
-            obj.Acceleration = input(1);
+            obj.Acceleration = inputs(1);
             obj.AngularAcceleration = inputs(2);
 
             %% Integrate position and velocity
@@ -113,7 +155,7 @@ classdef MotorcycleStrategy < DrivingStrategy
 
             if station > getSegmentLength(obj)
                 %----------------------------------------------------
-                % 兩段式機車:
+                % 兩段式左轉 Stage1
                 %
                 % 如果這是一台兩段式左轉機車，而且現在正在第一段，
                 % 那麼第一段走完後，不要切換 Node，
@@ -134,14 +176,14 @@ classdef MotorcycleStrategy < DrivingStrategy
 
                     % 重新取得終點位置
                     obj.Position = ...
-                        getRoadCenterfromStation(obj.Node, station);
+                        getRoadCenterFromStation(obj.Node, station);
 
                     % 重新取得車道方向與偏移
                     [station, direction, offset] = getLaneInformation(obj);
                 
                 else
                     %----------------------------------------------------
-                    % 一般車輛原本的行為
+                    % 一般車輛原本的行為/第二段左轉
                     %----------------------------------------------------
                     goToNextNode(obj, tNext);
 
@@ -155,7 +197,7 @@ classdef MotorcycleStrategy < DrivingStrategy
                     end
                 end
             end
-            
+
             %% Update state dependent variables
             obj.Station = station;
             updateUDStates(obj, tNow);
@@ -163,7 +205,7 @@ classdef MotorcycleStrategy < DrivingStrategy
             %% Keep vehicle aligned with lane
             if obj.StaticLaneKeeping
                 % 根據道路的方向與偏移量，把車子的方向和位置對齊道路。
-                obj.orientEgoActor(direct, offset);
+                obj.orientEgoActor(direction, offset);
             end
 
             %% Store Data
