@@ -193,7 +193,7 @@ classdef Node < handle
                 return
             end
             
-            numVehicles = numel(obj.vehicles);
+            numVehicles = numel(obj.Vehicles);
             maxStation = -inf;
 
             for k=1:numVehicles
