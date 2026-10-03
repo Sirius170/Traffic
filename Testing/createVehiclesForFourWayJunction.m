@@ -66,7 +66,14 @@ for i=1:numEntryRoads
         else
             motorcycle = vehicle(s,'Position',pos,'EntryTime',entryTime,'Velocity',[10,0,0]);
             motorcycle.ForwardVector = [direction,0];
-            MotorcycleStrategy(motorcycle,'NextNode',path);
+            strategy = MotorcycleStrategy(motorcycle,'NextNode',path);
+           
+            %如果 j=1. 表示這台機車要左轉
+            if j==1
+                strategy.IsTwoStageLeft = true;
+                strategy.TurnStage = 1;
+            end
+
             motorcycles(end+1)=motorcycle;
             motorcycleEntryRoad(end+1) = i; 
         end    
