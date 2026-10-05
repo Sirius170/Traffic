@@ -7,7 +7,7 @@ function [totalWaiting, waitingByRoad] = runFourWaySimulation(phaseSeconds)
 %   phaseSeconds = [South West North East] 的綠燈時間
 %
 % 輸出：
-%   totalWaiting = 四個方向總等待時間
+%   totalWaiting  = 四個方向總等待時間
 %   waitingByRoad = 各方向等待時間
 % =========================================================
 
@@ -65,9 +65,7 @@ while advance(s)
             waitingByRoad(road) = waitingByRoad(road) + s.SampleTime;
 
         end
-
     end
-
 end
 
 % ---------- 最終結果 ----------

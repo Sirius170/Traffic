@@ -166,13 +166,13 @@ classdef Node < handle
             minVehicle = driving.scenario.Vehicle.empty;
 
             for k = 1:numVehicles
-                %取的第k台車的Strategy
-                driver = obj.Vehicles(k).MotionStrategy
+                % 取的第k台車的Strategy
+                driver = obj.Vehicles(k).MotionStrategy;
                 
-                %取的這台車目前的位置
+                % 取的這台車目前的位置
                 station = getStationDistance(driver, time);
 
-                %找距離道路起點最近的車
+                % 找距離道路起點最近的車
                 if station < minStation
                     minStation = station;
                     minVehicle = obj.Vehicles(k);
@@ -184,7 +184,7 @@ classdef Node < handle
         end
         
         function s = getLeadingVehicleStation(obj,time)
-            if nargin<2 %If no time is given assusme current sim time
+            if nargin<2 % If no time is given assusme current sim time
                 time = obj.Scenario.SimulationTime;
             end
 
@@ -197,13 +197,13 @@ classdef Node < handle
             maxStation = -inf;
 
             for k=1:numVehicles
-                %取得第k台車的 Strategy
+                % 取得第k台車的 Strategy
                 driver = obj.Vehicles(k).MotionStrategy;
 
-                %取得這台車目前的位置
+                % 取得這台車目前的位置
                 station = getStationDistance(driver, time);
 
-                %找距離道路終點最近的車
+                % 找距離道路終點最近的車
                 if station >maxStation
                     maxStation = station;
                 end

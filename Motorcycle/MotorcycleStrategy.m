@@ -13,6 +13,8 @@ classdef MotorcycleStrategy < DrivingStrategy
 
         % 是否為兩段式左轉機車
         IsTwoStageLeft = 0;
+
+        WaitingNode = Node.empty;
     end
 
 
@@ -22,8 +24,9 @@ classdef MotorcycleStrategy < DrivingStrategy
             obj@DrivingStrategy(actor, varargin{:});
 
             % 初始狀態
-            obj.TurnStage = false;
+            obj.TurnStage = 0;  % 尚未進入兩段式左轉
             obj.IsTwoStageLeft = false;
+            obj.WaitingNode = Node.empty;
         end
 
 
@@ -148,8 +151,7 @@ classdef MotorcycleStrategy < DrivingStrategy
 
             %% Integrate position and velocity
             obj.Position = obj.Position + dt * car.Velocity;
-            obj.Speed = obj.Speed + dt*car.Acceleration;
-
+            obj.Speed = obj.Speed + dt*obj.Acceleration;
             %% Check whether vehicle reaches the end of current Node
             [station, direction, offset] = getLaneInformation(obj);
 
@@ -163,7 +165,12 @@ classdef MotorcycleStrategy < DrivingStrategy
                 % 並把車停在目前 Node 的終點。
                 %----------------------------------------------------
 
-                if obj.IsTwoStageLeft && obj.TurnStage == 1
+                if obj.IsTwoStageLeft && obj.TurnStage == 1 &&...
+                        ~isempty(obj.WaitingNode) && obj.Node == obj.WaitingNode
+
+                    fprintf('【二段式左轉】到達待轉區，Stage 1 -> Stage 2\n');
+                    fprintf('目前 Speed = %.2f\n', obj.Speed);                    
+                                    
                     % 第一階段完成，進入待轉等待
                     obj.TurnStage = 2;
 
