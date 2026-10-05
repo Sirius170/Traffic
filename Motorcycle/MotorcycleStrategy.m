@@ -91,9 +91,13 @@ classdef MotorcycleStrategy < DrivingStrategy
 
 
             %% 兩段式左轉 Stage2: 待轉區等待
+            
             if obj.IsTwoStageLeft && obj.TurnStage == 2
                 % 檢查下一個 Node 是否開啟
                 if getNextNodeState(obj)
+
+                    fprintf('【二段式左轉】Stage 2 -> Stage 3，第二段號誌允許通行\n');
+                    
                     % 第二階段號誌開放
                     obj.TurnStage = 3;
 

@@ -129,13 +129,13 @@ function path = getMotorcycleLeftPath(i, net)
             % South -> North -> West
             path = [net(1), net(10), net(17), net(6)];
         case 2
-            % West -> East -> North
-            path = [net(2), net(13), net(20), net(7)];
+            % West -> East -> Sorth
+            path = [net(2), net(13), net(20), net(5)];
         case 3
             % North -> South -> East
             path = [net(3), net(16), net(11), net(8)];
         case 4 
-            % East -> West -> North
-            path = [net(4), net(19), net(12), net(5)];
+            % East -> West -> Sorth
+            path = [net(4), net(19), net(14), net(5)];
     end      
 end
