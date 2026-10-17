@@ -26,9 +26,15 @@ s.SampleTime = 0.05;
 
 net = createFourWayJunctionNetwork(s);
 
+% Debug：確認道路節點與 RoadID 的對應-----------------------------------
+for k = 1:numel(net)
+    fprintf('net(%d) -> RoadID=%d, Lane=%d\n', ...
+        k, net(k).RoadSegment.RoadID, net(k).Lane);
+end
+
 MotorcycleShare = 0.5;
-[cars, motorcycles, carEntryRoad, motorcycleEntryRoad] = createVehiclesForFourWayJunction( ...
-    s, net, inflow, turnWeights, MotorcycleShare);
+[cars, motorcycles, carEntryRoad, motorcycleEntryRoad] = ...
+    createVehiclesForFourWayJunction(s, net, inflow, turnWeights, MotorcycleShare);
 
 % ---------- 等待時間 ----------
 allVehicles = [cars(:); motorcycles(:)];
@@ -53,17 +59,12 @@ initializeOTLScenario(s);
 while advance(s)
 
     for k = 1:numel(allVehicles)
-
         speed = norm(allVehicles(k).Velocity);
-
+       
         if speed < 0.1
-
             waitingTime(k) = waitingTime(k) + s.SampleTime;
-
             road = allEntryRoad(k);
-
             waitingByRoad(road) = waitingByRoad(road) + s.SampleTime;
-
         end
     end
 end

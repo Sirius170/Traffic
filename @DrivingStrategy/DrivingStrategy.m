@@ -514,7 +514,9 @@ classdef DrivingStrategy < driving.scenario.MotionStrategy...
         end
         
         function state = getNextNodeState(obj)
-            state = 1;
+            % 預設不允許通行，避免沒有號誌時誤判為綠燈
+            state = 0;
+            
             if ~isempty(obj.NextNode)
                 if ~isempty(obj.NextNode(1).TrafficController)
                     state = obj.NextNode(1).getNodeState();

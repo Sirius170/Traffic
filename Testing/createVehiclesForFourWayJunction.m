@@ -123,14 +123,15 @@ end
 
 
 %% 建立兩段式左轉路徑
+%  修正路線時，createFourWayJunctionNetwork也要改
 function path = getMotorcycleLeftPath(i, net)
     switch i
         case 1
             % South -> North -> West
             path = [net(1), net(10), net(17), net(6)];
         case 2
-            % West -> East -> Sorth
-            path = [net(2), net(13), net(20), net(5)];
+            % West -> East -> North
+            path = [net(2), net(13), net(20), net(7)];
         case 3
             % North -> South -> East
             path = [net(3), net(16), net(11), net(8)];

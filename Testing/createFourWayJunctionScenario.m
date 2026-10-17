@@ -37,46 +37,46 @@ roadCenters3 = dot(roadCenters,repmat(e3,[6,1]),2);
 
 
 %% Roads 
-%South Road
+%South Road(1)
 locRoadCenters = [roadCenters1(1),roadCenters2(1),roadCenters3(1);roadCenters1(1)-roadLengths(1),roadCenters2(1),roadCenters3(1)];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
-%East Road
+%East Road(2)
 locRoadCenters = [roadCenters1(end),roadCenters2(end),roadCenters3(end);roadCenters1(end),roadCenters2(end)+roadLengths(2),roadCenters3(end)];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
-%North Road
+%North Road(3)
 locRoadCenters = [-roadCenters1(1),roadCenters2(1),roadCenters3(1);-roadCenters1(1)+roadLengths(1),roadCenters2(1),roadCenters3(1)];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
-%West Road
+%West Road(4)
 locRoadCenters = [roadCenters1(end),-roadCenters2(end),roadCenters3(end);roadCenters1(end),-roadCenters2(end)-roadLengths(2),roadCenters3(end)];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
-%South to West
+%South to West(5)
 locRoadCenters = [roadCenters1,roadCenters2,roadCenters3];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
-%South to North
+%South to North(6)
 locRoadCenters=[roadCenters1(1),roadCenters2(1),roadCenters3(1);-roadCenters1(1),roadCenters2(1),roadCenters3(1)];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
-%South to East
+%South to East(7)
 locRoadCenters = [roadCenters1,-roadCenters2,roadCenters3];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
 
-%North to West
+%North to West(8)
 locRoadCenters = [-roadCenters1,roadCenters2,roadCenters3];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
 
-%East to West
+%East to West(9)
 locRoadCenters=[roadCenters1(end),roadCenters2(end),roadCenters3(end);roadCenters1(end),-roadCenters2(end),roadCenters3(end)];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 
 
-%North to East
+%North to East(10)
 locRoadCenters = [-roadCenters1,-roadCenters2,roadCenters3];
 road(s,locRoadCenters,'Lanes', laneSpecification);
 

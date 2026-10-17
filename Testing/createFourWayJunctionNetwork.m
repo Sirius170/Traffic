@@ -94,12 +94,12 @@ net(4).SharesRoadWith = net(8);
 net(10).ConnectsTo = net(17);
 
 % West -> East -> North
-net(13).ConnectsTo = net(18);
+net(13).ConnectsTo = net(20);
 
 % North -> South -> East
 net(16).ConnectsTo = net(11);
 
-% East -> West -> North
+% East -> West -> Sorth
 net(19).ConnectsTo = net(14);
 end
 
