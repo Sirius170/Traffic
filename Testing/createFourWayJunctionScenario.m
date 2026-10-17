@@ -1,10 +1,17 @@
 function s = createFourWayJunctionScenario()
 % Copyright 2020 - 2020 The MathWorks, Inc.
-roadLengths = [100,100,100,100];
-IntCenter = ([-401.4941 2185.809 0]+[-381.8 2208.1 0])/2;
-e1 = [-401.4941 2185.809 0]-IntCenter;
+
+% 讀取集中式路口設定
+cfg = targetIntersectionConfig();
+
+% 道路長度
+roadLengths = cfg.roadLengths;
+
+IntCenter = (cfg.intersectionPointA+cfg.intersectionPointB)/2;
+e1 = cfg.intersectionPointA-IntCenter;
 e1 = -e1./norm(e1);
-e2 = [-402.2 2206.4 0]-IntCenter;
+
+e2 = cfg.directionPoint-IntCenter;
 e2 = e2./norm(e2);
 
 e3 = [0,0,1];
@@ -13,22 +20,22 @@ translation = -IntCenter;
 s = drivingScenario;
 
 %% Lane marking
-marking = [laneMarking('Unmarked')
+marking = [
     laneMarking('Unmarked')
-    laneMarking('Solid', 'Width', 0.13)
-    laneMarking('Dashed', 'Width', 0.13)
-    laneMarking('Solid', 'Width', 0.13)
+    laneMarking('Unmarked')
+    laneMarking('Solid', 'Width', cfg.laneMarkingWidths )
+    laneMarking('Dashed', 'Width', cfg.laneMarkingWidths )
+    laneMarking('Solid', 'Width', cfg.laneMarkingWidths )
     laneMarking('Unmarked')
     laneMarking('Unmarked')];
-laneSpecification = lanespec([3 3], 'Width', [1.5 0.15 3.65 3.65 0.15 1.5], 'Marking', marking);
+
+% 依集中式設定建立車道規格 
+% Width 是車道寬度，不是標線寬度。
+
+laneSpecification = lanespec(cfg.laneSpecification, 'Width', cfg.laneWidths, 'Marking', marking);
 
 %% Turn
-roadCenters = [-401.4941 2185.809 0;
-    -400.5184 2186.908 0;
-    -398.6231 2189.23 0;
-    -399.4963 2203.927 0;
-    -401.6534 2206.009 0;
-    -402.7523 2206.984 0];
+roadCenters = cfg.roadCenters;
 roadCenters = roadCenters+translation;
 
 roadCenters1 = dot(roadCenters,repmat(e1,[6,1]),2);
