@@ -4,6 +4,17 @@ function s = createFourWayJunctionScenario()
 % 讀取集中式路口設定
 cfg = targetIntersectionConfig();
 
+% 檢查集中式設定，避免車道數量與寬度設定不一致
+assert(numel(cfg.laneSpecification) == 2, ...
+    'laneSpecification 必須包含兩個方向的車道數量。');
+assert(all(cfg.laneSpecification == cfg.lanesPerDirection),...
+    'laneSpecification 與 lanesPerDirection 設定不一致。');
+assert(numel(cfg.laneWidths) == sum(cfg.laneSpecification),...
+    'laneWidths 的數量必須與雙向總車道數一致。');
+assert(all(cfg.laneWidths > 0),...
+    '所有車道寬度都必須大於 0。');
+
+
 % 道路長度
 roadLengths = cfg.roadLengths;
 
@@ -20,12 +31,16 @@ translation = -IntCenter;
 s = drivingScenario;
 
 %% Lane marking
+% 雙向各 4 車道，共 8 條車道。
+% lanespec 需要 9 個標線項目，對應車道間與道路兩側的邊界。
 marking = [
     laneMarking('Unmarked')
-    laneMarking('Unmarked')
-    laneMarking('Solid', 'Width', cfg.laneMarkingWidths )
+    laneMarking('Dashed', 'Width', cfg.laneMarkingWidths )
     laneMarking('Dashed', 'Width', cfg.laneMarkingWidths )
     laneMarking('Solid', 'Width', cfg.laneMarkingWidths )
+    laneMarking('Solid', 'Width', cfg.laneMarkingWidths )
+    laneMarking('Dashed', 'Width', cfg.laneMarkingWidths )
+    laneMarking('Dashed', 'Width', cfg.laneMarkingWidths )
     laneMarking('Unmarked')
     laneMarking('Unmarked')];
 
@@ -36,7 +51,7 @@ laneSpecification = lanespec(cfg.laneSpecification, 'Width', cfg.laneWidths, 'Ma
 
 %% Turn
 roadCenters = cfg.roadCenters;
-roadCenters = roadCenters+translation;
+roadCenters = roadCenters + translation;
 
 roadCenters1 = dot(roadCenters,repmat(e1,[6,1]),2);
 roadCenters2 = dot(roadCenters,repmat(e2,[6,1]),2);
