@@ -16,6 +16,10 @@ classdef Node < handle
         Scenario
         RoadSegment
         Lane
+        
+        % 節點所對應方向的車道寬度，用來計算車道中心偏移
+        LaneWidth
+        
         Length
         Mapping
         Vehicles = driving.scenario.Vehicle.empty
@@ -28,10 +32,30 @@ classdef Node < handle
     
     %% Constructor and Setup methods
     methods
-        function obj = Node(scenario,rs,lane)
+        %-------------------------------------------------------------
+        % 建立道路節點，並設定對應車道寬度。
+        %
+        % scenario  : drivingScenario 場景
+        % rs        : 此節點對應的 RoadSegment
+        % lane      : 車道側別，沿用原本的 -1 或 1
+        % laneWidth : 車道寬度，單位為公尺
+        %-------------------------------------------------------------
+        function obj = Node(scenario, rs, lane, laneWidth)
             obj.Scenario = scenario;
             obj.RoadSegment = rs;
             obj.Lane = lane;
+
+            % 若舊程式沒有傳入車道寬度，保留原本的 3.65 m 預設值。
+            if nargin < 4 || isempty(laneWidth)
+                laneWidth = 3.65;
+            end
+
+            % 確保車道寬度為正的數值純量。
+            validateattributes(laneWidth, {'numeric'}, ...
+                {'scalar', 'real', 'finite', 'positive'});
+            obj.LaneWidth = laneWidth;
+            
+            % 使用完成初始化的參數建立車道映射。
             obj.setMapping;
         end
         
@@ -47,7 +71,10 @@ classdef Node < handle
                 [center, left, kappa, dkappa, dx_y] = obj.roadDistanceToCenterAndLeft(xr(idx), rs.hcd, rs.hl, rs.hip, rs.course, rs.k0, rs.k1, rs.vpp, rs.bpp);
                 left = left*(-obj.Lane);
                 dx_y = dx_y*(obj.Lane);
-                center = center + left*3.65/2;
+                
+                % 將節點映射定位至對應方向的車道中心
+                % 使用節點保存的車道寬度，避免固定寫死 3.65 公尺
+                center = center + left*obj.LaneWidth/2;
                 
                 if obj.Lane == -1
                     map(idx,:) = [xr(end+1-idx),center,real(dx_y),imag(dx_y)];

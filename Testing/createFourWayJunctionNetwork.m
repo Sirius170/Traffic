@@ -2,46 +2,67 @@ function [net] = createFourWayJunctionNetwork(scenario)
 
 % Copyright 2020 - 2020 The MathWorks, Inc.
 
+% 建立四岔路口的道路節點網路。
+% 車道寬度統一由 targetIntersectionConfig.m 管理。
+cfg = targetIntersectionConfig();
+laneWidth = cfg.defaultLaneWidth;
+
 %Create the Network of Node Objects
 %% Create The Nodes
 %Roads
-for i=1:4 %into the intersection
-net(i) = Node(scenario,scenario.RoadSegments(i),-1);
+% 前四個：進入路口的道路
+for i=1:4 
+net(i) = Node(scenario, ...
+    scenario.RoadSegments(i),-1, cfg.defaultLaneWidth);
 end
 
-for i=1:4 %out of the intersection
-net(end+1) = Node(scenario,scenario.RoadSegments(i),1);
+% 後四個：離開路口的道路
+for i=1:4
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(i),1,cfg.defaultLaneWidth);
 end
 
 % Manuever at the intersection
 
 %South to West 9
-net(end+1) = Node(scenario,scenario.RoadSegments(5),1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(5),1,cfg.defaultLaneWidth);
 %South to North 10
-net(end+1) = Node(scenario,scenario.RoadSegments(6),1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(6),1,cfg.defaultLaneWidth);
 %South to East 11
-net(end+1) = Node(scenario,scenario.RoadSegments(7),1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(7),1,cfg.defaultLaneWidth);
 
 %West to North 12
-net(end+1) = Node(scenario,scenario.RoadSegments(8),-1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(8),-1,cfg.defaultLaneWidth);
 %West to East 13
-net(end+1) = Node(scenario,scenario.RoadSegments(9),1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(9),1,cfg.defaultLaneWidth);
 %West to South 14
-net(end+1) = Node(scenario,scenario.RoadSegments(5),-1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(5),-1,cfg.defaultLaneWidth);
 
 %North to East 15
-net(end+1) = Node(scenario,scenario.RoadSegments(10),1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(10),1,cfg.defaultLaneWidth);
 %North to South 16
-net(end+1) = Node(scenario,scenario.RoadSegments(6),-1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(6),-1,cfg.defaultLaneWidth);
 %North to West 17
-net(end+1) = Node(scenario,scenario.RoadSegments(8),1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(8),1,cfg.defaultLaneWidth);
 
 %East to South 18
-net(end+1) = Node(scenario,scenario.RoadSegments(7),-1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(7),-1,cfg.defaultLaneWidth);
 %East to West 19
-net(end+1) = Node(scenario,scenario.RoadSegments(9),-1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(9),-1,cfg.defaultLaneWidth);
 %East to North 20
-net(end+1) = Node(scenario,scenario.RoadSegments(10),-1);
+net(end+1) = Node(scenario, ...
+    scenario.RoadSegments(10),-1,cfg.defaultLaneWidth);
 
 %% Connect the Nodes
 % South Road

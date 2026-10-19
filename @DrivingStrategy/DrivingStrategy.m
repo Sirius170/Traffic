@@ -514,10 +514,20 @@ classdef DrivingStrategy < driving.scenario.MotionStrategy...
         end
         
         function state = getNextNodeState(obj)
-            % 預設不允許通行，避免沒有號誌時誤判為綠燈
-            state = 0;
-            
+            % =========================================================
+            % 判斷下一個 Node 是否允許進入
+            %
+            % 有號誌控制器  ：依照實際號誌狀態判斷。
+            % 沒有號誌控制器：視為允許通行。
+            %
+            % 路口內的轉向 Node 可能連接到沒有號誌的出口 Node。
+            % 不可把「沒有號誌」直接視為紅燈，否則車輛會停在路口內。
+            % =========================================================
+            state = true;
+
             if ~isempty(obj.NextNode)
+                nextNode = obj.NextNode(1);
+
                 if ~isempty(obj.NextNode(1).TrafficController)
                     state = obj.NextNode(1).getNodeState();
                 end
@@ -537,57 +547,142 @@ classdef DrivingStrategy < driving.scenario.MotionStrategy...
             state = obj.getNextNodeState();
             isLeader = isempty(leader);
             
+            % =========================================================
+            % 核心原則：
+            % 1. 前車是否通過，不決定本車是否有通行權。
+            % 2. 紅燈時，尚未進入路口的車輛必須進入紅燈減速模式。
+            % 3. 已經進入受控路口的車輛，不應因號誌改變而停在路口內。
+            % =========================================================
             
             % Determine the mode
+            isInsideControlleredNode = ~isempty(obj.Node.TrafficController);
+            
             if state
+                % 下一個 Node 允許通行
                 if isLeader
                     mode = 'ApproachingGreenLight';
                 else
                     mode = 'CarFollowing';
                 end
-            else
+            
+            elseif isInsideControlleredNode
+                % 本車已在受控路口內，避免因號誌轉紅而停在路口中央
                 if isLeader
-                    mode = 'ApproachingRedLight';
+                    mode = 'ApproachingGreenLight';
                 else
-                    leaderIsPastRoadEnd = getNode(leader.MotionStrategy,tNow)~=obj.Node;
-                    if leaderIsPastRoadEnd
-                        mode = 'ApproachingRedLight';
-                    else
-                        mode = 'CarFollowing';
-                    end
+                    mode = 'CarFollowing';
                 end
+
+            else
+                % 尚在路口外且下一個 Node 為紅燈：
+                % 不論前車是否已經通過，本車都必須自行準備停車。
+                mode = 'ApproachingRedLight';
             end
         end
         
         function inputs = determineDrivingInputs(obj,tNow)
-            
+            dt = obj.Scenario.SampleTime;
             segLength = obj.getSegmentLength();
             leader = obj.Leader;
-            distToEnd = segLength-obj.Station;
-            
-            switch obj.Mode
-                case 'CarFollowing'
-                    delVel = leader.MotionStrategy.Speed-obj.Speed;
-                    leaderSpacing = obj.LeaderSpacing;
-                case 'ApproachingRedLight'
-                    delVel = 0 - obj.Speed;
-                    leaderSpacing = distToEnd;
-                case 'ApproachingGreenLight'
-                    delVel = 0;
-                    leaderSpacing = inf;
+            speed = max(obj.Speed, 0);
+
+            % 前車限制與停止線限制分開計算
+            accLeader = inf;
+            accStopLine = inf;
+
+            % =========================================================
+            % 限制一：前車間距
+            % 前車是否通過路口，不影響本車對前車的安全距離判斷。
+            % =========================================================
+            if ~isempty(leader) && isfinite(obj.LeaderSpacing) 
+                leaderSpeed = max(leader.MotionStrategy.Speed, 0);
+                leaderGap   = max(obj.LeaderSpacing, 0);
+                speedDiff   = leaderSpeed - speed;
+
+                if strcmp(obj.CarFollowingModel, 'Gipps')
+                    accLeader = drivingBehavior.gippsDriverModel( ...
+                        leaderGap, speed, speedDiff);
+                else
+                    accLeader = carFollowing(obj, leaderGap, speed, speedDiff);
+                end
             end
-            acc = carFollowing(obj,leaderSpacing,obj.Speed,delVel);
+
+            % =========================================================
+            % 限制二：紅燈停止線
+            % 僅當本車下一個 Node 受號誌控制且目前為紅燈時啟用。
+            % =========================================================
+            redLight = false;
+
+            if ~isempty(obj.NextNode)
+                nextNode = obj.NextNode(1);
+
+                if ~isempty(nextNode.TrafficController)
+                    redLight = ~nextNode.getNodeState();
+                end
+            end
+
+            if redLight && isempty(obj.Node.TrafficController)
+                % 停留點保留車身長度及 2m 緩衝距離
+                stopOffset = obj.EgoActor.Length/2+2.0;
+                stopDistance = max(segLength - obj.Station - stopOffset, 0);
+
+                if strcmp(obj.CarFollowingModel, 'Gipps')
+                    accStopLine = drivingBehavior.gippsDriverModel( ...
+                        max(stopDistance, 0.1), speed, -speed);
+                else
+                    accStopLine = carFollowing( ...
+                        obj, max(stopDistance, 0.1), speed, -speed);
+                end
+                % =====================================================
+                % 預測下一個時間步的位置
+                %
+                % sNext = s + v*dt + 0.5*a*dt^2
+                %
+                % 若預測會越過停止點，反推本時間步所需的減速度。
+                % 這個檢查在位置更新前執行，不再等車輛越線後回拉。
+                % =====================================================
+                predictedTravel = speed*dt + 0.5*accStopLine*dt^2;
+
+                if predictedTravel >= stopDistance
+                    requiredAcc = 2*(stopDistance - speed*dt)/(dt^2);
+                    accStopLine = min(accStopLine, requiredAcc);
+                end
+            end
+
+            % =========================================================
+            % 取兩個獨立限制中較嚴格的加速度
+            % 加速度越小，代表減速越強。
+            % =========================================================
+            acc = min(accLeader, accStopLine);
             
-            %Saturate acc
-                %With velocity bounds
-            accBounds = (obj.SpeedBounds-obj.Speed)/obj.Scenario.SampleTime;
-                % With acceleration bounds
-            accBounds = [max(accBounds(1),obj.AccBounds(1)), min(accBounds(2),obj.AccBounds(2))];
-            
-            acc = min(max(accBounds(1),acc),accBounds(2));
-            
+            % 沒有前車限制或紅燈限制時，維持原本的行為模式
+            if isinf(acc)
+                switch obj.Mode
+                    case 'ApproachingGreenLight'
+                        acc = 0;
+                    otherwise
+                        acc = obj.Acceleration;
+                end
+            end
+
+            % 一般加速度與速度限制
+            accBounds = (obj.SpeedBounds - speed)/dt;
+
+            accBounds = [max(accBounds(1), obj.AccBounds(1)),...
+                         min(accBounds(2), obj.AccBounds(2))];
+            acc = min(max(accBounds(1), acc), accBounds(2));
+           
+            % 緊急越線預測優先於一般舒適減速度限制。
+            % 若 requiredAcc 低於一般減速度下限，這裡仍保留該限制；
+            % 下一步的模擬結果需要特別檢查是否已接近物理上來不及停車。
+            if redLight && isempty(obj.Node.TrafficController)
+                if predictedTravel >= stopDistance
+                    acc = min(acc,requiredAcc);
+                end
+            end
+
             inputs = [acc,0];
-            
+   
         end
         
         function acc = carFollowing(obj,spacing,speed,speedDiff)
@@ -604,11 +699,8 @@ classdef DrivingStrategy < driving.scenario.MotionStrategy...
                 if ~isreal(acc)
                     acc = 0;
                 end
-            end
-            
+            end 
         end
-        
-        
     end
     %% Inherited Abstract Methods (move, restart)
     methods
@@ -695,17 +787,29 @@ classdef DrivingStrategy < driving.scenario.MotionStrategy...
             
             %% Integrate
 
-                % Position and Velocity
-            obj.Position = obj.Position + dt*car.Velocity;
-            obj.Speed = obj.Speed + dt*obj.Acceleration;
+            % =========================================================
+            % 先更新速度，再以新舊速度的平均值更新位置。
+            % 讓位置積分與加速度計算保持一致。          
+            % =========================================================            
+            oldVelocity = car.Velocity;
+            oldSpeed = max(obj.Speed, 0);
+            
+            newSpeed = max(0, oldSpeed + dt * obj.Acceleration);
+            
+            obj.Speed = newSpeed;
+            newVelocity = car.Velocity;
+
+            obj.Position = obj.Position + 0.5*dt*(oldVelocity+newVelocity);
                 
-                % Forward Vector
+            % Forward Vector
             %obj.ForwardVector = ... to be implemented 
             
             %% Update state dependent variables
             % Get new station distance, node and lane information
             [station, direction, offset] = getLaneInformation(obj);
-            
+
+            segLength = getSegmentLength(obj);
+
             if station > getSegmentLength(obj) % Check if the veh entered a new node
                 goToNextNode(obj,tNext)
                 if isempty(obj.Node)

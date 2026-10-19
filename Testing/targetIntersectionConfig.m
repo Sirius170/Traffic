@@ -15,7 +15,6 @@ cfg.roadLengths = [100,100,100,100];
 %% 基本道路車道設定
 cfg.lanesPerDirection = 4;
 cfg.totalLanesPerRoad = 2 * cfg.lanesPerDirection;
-
 cfg.laneSpecification = [4 4];
 
 % 暫定每條車道寬度(由中央分隔線往外)
@@ -27,6 +26,31 @@ cfg.laneWidths = ...
 
 % 標線寬度
 cfg.laneMarkingWidths = 0.13;
+
+%% 路口幾何設定
+%  路口範圍與標線尺寸
+cfg.intersection.crosswalkWidth = 4.0; % 行人穿越道深度
+cfg.intersection.stoplineOffset = 2.0; % 停止線與穿越道的間距
+cfg.intersection.stopLineWidth = 0.30; % 停止線寬度
+cfg.intersection.laneMarkingWidth = cfg.laneMarkingWidths;
+
+% 中央分隔島: 先假設尺寸，尚不改變道路幾何
+cfg.intersection.medianWidth = 0.50;
+
+% 待轉格：先假設尺寸，尚不改變道路幾何
+cfg.intersection.motorcycleWaitingBoxWidth  = 3.0;
+cfg.intersection.motorcycleWaitingBoxLength  = 5.0;
+
+
+% 道路與車道基本尺寸
+cfg.intersection.laneWidth = cfg.defaultLaneWidth;
+cfg.intersection.lanesPerDirection = cfg.lanesPerDirection;
+cfg.intersection.roadWidthPerDirection = ...
+    cfg.intersection.laneWidth * cfg.intersection.lanesPerDirection;
+
+% 雙向道路總寬度:目前尚未額外扣除中央分隔島
+cfg.intersection.totalRoadWidth = ...
+    2 * cfg.intersection.roadWidthPerDirection;
 
 %% 定位座標
 cfg.intersectionPointA = [-401.4941 2185.809 0];
@@ -57,9 +81,15 @@ cfg.zhongxiaoRoad.name = "忠孝東路三段";
 cfg.zhongxiaoRoad.laneCount = 4;
 cfg.zhongxiaoRoad.laneType = {"禁行機車", "一般車道", "一般車道", "一般車道"};
 
+% 各方向車道寬度，單位：公尺
 cfg.laneWidthsPerDirection = ...
     repmat(cfg.defaultLaneWidth, 1, cfg.lanesPerDirection);
 cfg.laneWidthsBothDirection = ...
     repmat(cfg.defaultLaneWidth, 1, cfg.totalLanesPerRoad);
 
+% 確認車道用途數量與設定的車道數一致
+assert(numel(cfg.xinshengRoad.laneType) == cfg.xinshengRoad.laneCount),
+    '新生南路一段的車道用途數量不正確';
+assert(numel(cfg.zhongxiaoRoad.laneType) == cfg.zhongxiaoRoad.laneCount),
+    '忠孝東路三段的車道用途數量不正確';
 end
